@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
+import { updateGroup } from "../../services/groupService";
 
 const activitySchema = z.object({
   description: z
@@ -22,6 +23,9 @@ interface GroupCardProps {
 export function GroupCard({ group }: GroupCardProps) {
   const [showModal, setShowModal] = useState(false);
   const [activities, setActivities] = useState<ActivityDTO[]>(group.activities);
+
+  const [editingGroup, setEditingGroup] = useState(false);
+  const [groupName, setGroupName] = useState(group.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
@@ -59,12 +63,54 @@ export function GroupCard({ group }: GroupCardProps) {
     }
   }, [showModal]);
 
+  useEffect(() => {
+    if (editingGroup && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingGroup]);
+
+  async function handleUpdateGroup() {
+    if (!groupName.trim()) return;
+
+    if (groupName === group.name) return;
+
+    try {
+      const updated = await updateGroup(group.id, { name: groupName });
+      setGroupName(updated.name);
+      setEditingGroup(false);
+      toast.success("Grupo atualizado com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Falha ao atualizar grupo.");
+    }
+  }
+
+  function handleGroupKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      handleUpdateGroup();
+    }
+  }
+
   return (
     <section className="bg-white rounded-xl shadow-md w-80 h-max flex-shrink-0 border border-gray-200">
-      <header
-        className="p-4 py-2 rounded-t-xl font-semibold text-black"
-      >
-        {group.name}
+      <header className="p-4 py-2 rounded-t-xl font-semibold text-black">
+        {editingGroup ? (
+          <input
+            ref={inputRef}
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
+            onBlur={handleUpdateGroup}
+            onKeyDown={handleGroupKeyDown}
+            className="border border-gray-300 rounded p-1 w-full"
+          />
+        ) : (
+          <span
+            onClick={() => setEditingGroup(true)}
+            className="cursor-pointer hover:underline"
+          >
+            {groupName}
+          </span>
+        )}
       </header>
 
       {showModal && (

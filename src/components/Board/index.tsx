@@ -48,7 +48,7 @@ export default function Board() {
         ) : (
           <button
             onClick={() => setCreating(true)}
-            className="text-indigo-600 font-semibold hover:underline"
+            className="text-indigo-600 font-semibold hover:underline cursor-pointer"
           >
             + Novo Grupo
           </button>

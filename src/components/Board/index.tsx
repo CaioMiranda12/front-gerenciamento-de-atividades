@@ -1,16 +1,59 @@
+import { useEffect, useState } from "react";
 import type { GroupDTO } from "../../types";
 import { GroupCard } from "../GroupCard";
+import { createGroup, getAllGroups } from "../../services/groupService";
 
-interface BoardProps {
-  groups: GroupDTO[];
-}
+export default function Board() {
+  const [groups, setGroups] = useState<GroupDTO[]>([]);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [creating, setCreating] = useState(false);
 
-export default function Board({ groups }: BoardProps) {
+  useEffect(() => {
+    loadGroups();
+  }, [])
+
+  async function loadGroups() {
+    const data = await getAllGroups();
+    setGroups(data);
+  }
+
+  async function handleCreateGroup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+
+    const created = await createGroup({ name: newGroupName });
+    setGroups([...groups, created]);
+    setNewGroupName("");
+    setCreating(false);
+  }
+
   return (
-    <main className="flex gap-6 overflow-x-auto p-6 bg-gray-100 min-h-screen">
-      {groups.map((group) => (
-        <GroupCard key={group.id} group={group} />
+    <main className="p-6 flex gap-4 overflow-x-auto">
+      {groups.map((g) => (
+        <GroupCard key={g.id} group={g} />
       ))}
+
+      <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center">
+        {creating ? (
+          <form onSubmit={handleCreateGroup}>
+            <input
+              className="border border-gray-400 rounded p-2"
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="Nome do grupo..."
+              autoFocus
+              onBlur={() => setCreating(false)}
+            />
+          </form>
+        ) : (
+          <button
+            onClick={() => setCreating(true)}
+            className="text-indigo-600 font-semibold hover:underline"
+          >
+            + Novo Grupo
+          </button>
+        )}
+      </section>
     </main>
   );
 }

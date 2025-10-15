@@ -2,33 +2,55 @@ import { useEffect, useRef, useState } from "react";
 import type { ActivityDTO, GroupDTO } from "../../types";
 import { ActivityCard } from "../ActivityCard";
 import { createActivity } from "../../services/activityService";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "react-toastify";
 
+const activitySchema = z.object({
+  description: z
+    .string()
+    .min(3, "A descrição deve ter pelo menos 3 caracteres")
+    .max(200, "A descrição é muito longa"),
+});
 
+type ActivityFormData = z.infer<typeof activitySchema>;
 interface GroupCardProps {
   group: GroupDTO;
 }
 
 export function GroupCard({ group }: GroupCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [newDescription, setNewDescription] = useState("")
   const [activities, setActivities] = useState<ActivityDTO[]>(group.activities);
-
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleSave() {
-    if (!newDescription.trim()) return;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ActivityFormData>({
+    resolver: zodResolver(activitySchema),
+    defaultValues: { description: "" },
+  });
 
-    const newActivity = await createActivity({
-      description: newDescription,
-      groupId: group.id,
-      dueDate: "",
-      completed: false,
-    });
+  async function onSubmit(data: ActivityFormData) {
+    try {
+      const newActivity = await createActivity({
+        description: data.description,
+        groupId: group.id,
+        dueDate: "",
+        completed: false,
+      });
 
-    setActivities((prev) => [...prev, newActivity]);
-
-    setNewDescription("");
-    setShowModal(false);
+      setActivities((prev) => [...prev, newActivity]);
+      toast.success("Atividade criada com sucesso!");
+      reset();
+      setShowModal(false);
+    } catch (err) {
+      toast.error("Falha ao criar atividade.");
+      console.error(err);
+    }
   }
 
   useEffect(() => {
@@ -46,30 +68,50 @@ export function GroupCard({ group }: GroupCardProps) {
       </header>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-10">
           <div className="bg-white p-4 rounded-lg shadow-lg w-80">
-            <h3 className="font-semibold mb-2">Nova Atividade</h3>
-            <input
-              ref={inputRef}
-              value={newDescription}
-              onChange={(e) => setNewDescription(e.target.value)}
-              className="border p-2 w-full rounded mb-3"
-              placeholder="Descrição da atividade"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:underline cursor-pointer"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleSave}
-                className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer"
-              >
-                Salvar
-              </button>
-            </div>
+            <h3 className="font-semibold mb-3">Nova Atividade</h3>
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+              <div>
+                <input
+                  {...register("description")}
+                  ref={(element) => {
+                    register("description").ref(element);
+                    inputRef.current = element;
+                  }}
+                  className={`border p-2 w-full rounded ${errors.description ? "border-red-500" : "border-gray-300"
+                    }`}
+                  placeholder="Descrição da atividade"
+                />
+                {errors.description && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.description.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    reset();
+                    setShowModal(false);
+                  }}
+                  className="text-gray-500 hover:underline cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

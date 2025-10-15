@@ -33,7 +33,7 @@ export default function Board() {
         <GroupCard key={g.id} group={g} />
       ))}
 
-      <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center">
+      <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center h-20">
         {creating ? (
           <form onSubmit={handleCreateGroup}>
             <input

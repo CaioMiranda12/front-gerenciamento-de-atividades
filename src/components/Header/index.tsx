@@ -16,7 +16,7 @@ export function Header() {
       </div>
 
       <div className="relative">
-        <button className="p-2 rounded-full hover:bg-indigo-700 transition">
+        <button className="p-2 rounded-full cursor-pointer hover:bg-indigo-700 transition">
           <Bell size={20} className="text-white" />
         </button>
 

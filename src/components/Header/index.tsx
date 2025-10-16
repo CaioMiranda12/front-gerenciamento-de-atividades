@@ -21,7 +21,7 @@ export function Header({ onSearch, lateActivities }: HeaderProps) {
         <input
           type="text"
           placeholder="Localizar atividade..."
-          className="w-full outline-none text-sm text-gray-700 placeholder-gray-400"
+          className="w-full h-10 outline-none text-sm text-gray-700 placeholder-gray-400"
           value={search}
           onChange={handleChange}
         />

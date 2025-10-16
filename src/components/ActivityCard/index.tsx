@@ -10,8 +10,9 @@ import { toast } from "react-toastify";
 const activitySchema = z.object({
   description: z
     .string()
-    .min(3, "A descrição deve ter pelo menos 3 caracteres")
+    .min(1, "A descrição deve ter pelo menos 1 caracteres")
     .max(200, "A descrição é muito longa"),
+  dueDate: z.string().optional(),
 });
 
 type ActivityFormData = z.infer<typeof activitySchema>;
@@ -32,7 +33,10 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     formState: { errors, isSubmitting },
   } = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
-    defaultValues: { description: localActivity.description },
+    defaultValues: {
+      description: localActivity.description,
+      dueDate: localActivity.dueDate || ""
+    },
   });
 
   useEffect(() => {
@@ -46,11 +50,12 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       const updated = await updateActivity(localActivity.id, {
         ...localActivity,
         description: data.description,
+        dueDate: data.dueDate,
       });
       setLocalActivity(updated);
       toast.success("Atividade atualizada com sucesso!");
       setShowModal(false);
-      reset({ description: updated.description });
+      reset({ description: updated.description, dueDate: updated.dueDate || "" });
     } catch (error) {
       console.error(error);
       toast.error("Falha ao atualizar atividade.");
@@ -74,7 +79,10 @@ export function ActivityCard({ activity }: ActivityCardProps) {
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-10">
-          <div className="bg-white p-4 rounded-lg shadow-lg w-80">
+          <div
+            className="bg-white p-4 rounded-lg shadow-lg w-80"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="font-semibold mb-3">Editar atividade</h3>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
@@ -94,12 +102,21 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                 )}
               </div>
 
+              <div>
+                <label className="block text-sm text-gray-600 mb-1">Data de prazo</label>
+                <input
+                  type="date"
+                  {...register("dueDate")}
+                  className="border p-2 w-full rounded border-gray-300"
+                />
+              </div>
+
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    reset({ description: localActivity.description });
+                    reset({ description: localActivity.description, dueDate: localActivity.dueDate || "" });
                     setShowModal(false);
                   }}
                   className="text-gray-500 hover:underline cursor-pointer"
@@ -112,7 +129,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                   disabled={isSubmitting}
                   className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmitting ? "Saving..." : "Salvar"}
+                  {isSubmitting ? "Salvando..." : "Salvar"}
                 </button>
               </div>
             </form>

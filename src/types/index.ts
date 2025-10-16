@@ -2,7 +2,7 @@ export interface ActivityDTO {
   id: number;
   description: string;
   completed: boolean;
-  dueDate: string;
+  dueDate?: string;
 }
 
 export interface GroupDTO {

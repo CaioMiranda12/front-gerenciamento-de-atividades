@@ -111,7 +111,7 @@ export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateAct
 
   return (
     <section className="bg-white rounded-xl shadow-md w-80 h-max flex-shrink-0 border border-gray-200">
-      <header className="p-4 py-2 rounded-t-xl font-semibold text-black flex justify-between items-center">
+      <header className="p-4 py-2 rounded-t-xl font-semibold text-black flex justify-between items-center overflow-hidden">
         {editingGroup ? (
           <input
             ref={inputRef}
@@ -124,7 +124,7 @@ export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateAct
         ) : (
           <span
             onClick={() => setEditingGroup(true)}
-            className="cursor-pointer hover:underline"
+            className="cursor-pointer hover:underline break-words whitespace-normal max-w-[180px] block"
           >
             {groupName}
           </span>

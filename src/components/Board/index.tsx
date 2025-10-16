@@ -96,6 +96,7 @@ export default function Board() {
 
     const created = await createGroup({ name: newGroupName });
     setGroups([...groups, created]);
+    toast.success('Grupo criado com sucesso!')
     setNewGroupName("");
     setCreating(false);
   }

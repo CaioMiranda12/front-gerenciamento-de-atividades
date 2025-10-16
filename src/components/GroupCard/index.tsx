@@ -221,7 +221,7 @@ export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateAct
           onClick={() => setShowModal(true)}
           className="text-indigo-600 font-medium hover:underline transition cursor-pointer"
         >
-          + Nova Atividade
+          + Novo Card
         </button>
       </div>
 

@@ -68,10 +68,10 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:shadow-sm transition flex justify-between items-center cursor-pointer"
       onClick={() => setShowModal(true)}
     >
-      <div>
-        <h4 className="font-medium text-gray-800 hover:underline">{activity.description}</h4>
+      <div className="w-full overflow-hidden">
+        <h4 className="font-medium text-gray-800 hover:underline break-words whitespace-pre-wrap">{localActivity.description}</h4>
         {localActivity.description && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mt-1 flex-wrap text-sm text-gray-500">
             <Calendar size={12} />
             <p className="text-sm text-gray-500">{localActivity.dueDate && formatDateToBR(localActivity.dueDate)}</p>
           </div>

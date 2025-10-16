@@ -14,6 +14,8 @@ export default function Board() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
+  const [lateActivities, setLateActivities] = useState<ActivityDTO[]>([]);
+
   function handleSearch(search: string) {
     setSearchTerm(search.toLowerCase());
   }
@@ -64,6 +66,20 @@ export default function Board() {
       toast.error("Falha ao mover atividade");
     }
   }
+
+  useEffect(() => {
+    const late: ActivityDTO[] = [];
+
+    groups.forEach(group => {
+      group.activities.forEach(activity => {
+        if (activity.dueDate && new Date(activity.dueDate) < new Date() && !activity.completed) {
+          late.push(activity);
+        }
+      });
+    });
+
+    setLateActivities(late);
+  }, [groups]);
 
   useEffect(() => {
     loadGroups();
@@ -127,7 +143,7 @@ export default function Board() {
 
   return (
     <>
-      <Header onSearch={handleSearch} />
+      <Header onSearch={handleSearch} lateActivities={lateActivities} />
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <main className="p-6 flex gap-4 overflow-x-auto">

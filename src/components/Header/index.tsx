@@ -1,11 +1,12 @@
 import { useState, type ChangeEvent } from "react";
 import { Bell, Search } from "lucide-react";
+import type { ActivityDTO } from "../../types";
 interface HeaderProps {
   onSearch: (search: string) => void;
+  lateActivities: ActivityDTO[];
 }
 
-export function Header({ onSearch }: HeaderProps) {
-  const [hasLateTasks, setHasLateTasks] = useState(true);
+export function Header({ onSearch, lateActivities }: HeaderProps) {
   const [search, setSearch] = useState("");
 
   function handleChange(e: ChangeEvent<HTMLInputElement>) {
@@ -31,14 +32,14 @@ export function Header({ onSearch }: HeaderProps) {
           <Bell size={20} className="text-white" />
         </button>
 
-        {hasLateTasks && (
+        {lateActivities.length > 0 && (
           <div>
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
               1
             </span>
 
             <div className="absolute right-0 mt-2 bg-white border border-gray-200 text-xs text-gray-700 rounded-md shadow-lg p-2 w-max">
-              Existe(m) 1 atividade(s) com atraso na entrega
+              Existe(m) {lateActivities.length} atividade(s) com atraso na entrega
             </div>
           </div>
         )}

@@ -5,11 +5,25 @@ import { createGroup, getAllGroups } from "../../services/groupService";
 import { createActivity, deleteActivity, reorderActivities, updateActivity } from "../../services/activityService";
 import { DragDropContext, type DropResult } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
+import { Header } from "../Header";
 
 export default function Board() {
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
+
+  const [searchTerm, setSearchTerm] = useState("");
+
+  function handleSearch(search: string) {
+    setSearchTerm(search.toLowerCase());
+  }
+
+  function getFilteredActivities(group: GroupDTO) {
+    if (!searchTerm) return group.activities;
+    return group.activities.filter(activity =>
+      activity.description.toLowerCase().includes(searchTerm)
+    );
+  }
 
   async function handleDragEnd(result: DropResult) {
     const { source, destination } = result;
@@ -34,7 +48,6 @@ export default function Board() {
     destGroup.activities.splice(destination.index, 0, updatedActivity);
 
     setGroups(newGroups);
-    // await updateActivity(movedActivity.id, updatedActivity);
 
     try {
       await reorderActivities(
@@ -113,43 +126,47 @@ export default function Board() {
   }
 
   return (
-    <DragDropContext onDragEnd={handleDragEnd}>
-      <main className="p-6 flex gap-4 overflow-x-auto">
-        {groups.map((group) => (
-          <GroupCard
-            key={group.id}
-            group={group}
-            onGroupDeleted={(id) => setGroups(groups.filter(group => group.id !== id))}
+    <>
+      <Header onSearch={handleSearch} />
 
-            onCreateActivity={handleCreateActivity}
-            onUpdateActivity={handleUpdateActivity}
-            onDeleteActivity={handleDeleteActivity}
-          />
-        ))}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <main className="p-6 flex gap-4 overflow-x-auto">
+          {groups.map((group) => (
+            <GroupCard
+              key={group.id}
+              group={{ ...group, activities: getFilteredActivities(group) }}
+              onGroupDeleted={(id) => setGroups(groups.filter(group => group.id !== id))}
 
-        <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center h-20">
-          {creating ? (
-            <form onSubmit={handleCreateGroup}>
-              <input
-                className="border border-gray-400 rounded p-2"
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Nome do grupo..."
-                autoFocus
-                onBlur={() => setCreating(false)}
-              />
-            </form>
-          ) : (
-            <button
-              onClick={() => setCreating(true)}
-              className="text-indigo-600 font-semibold hover:underline cursor-pointer"
-            >
-              + Novo Grupo
-            </button>
-          )}
-        </section>
-      </main>
-    </DragDropContext>
+              onCreateActivity={handleCreateActivity}
+              onUpdateActivity={handleUpdateActivity}
+              onDeleteActivity={handleDeleteActivity}
+            />
+          ))}
+
+          <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center h-20">
+            {creating ? (
+              <form onSubmit={handleCreateGroup}>
+                <input
+                  className="border border-gray-400 rounded p-2"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  placeholder="Nome do grupo..."
+                  autoFocus
+                  onBlur={() => setCreating(false)}
+                />
+              </form>
+            ) : (
+              <button
+                onClick={() => setCreating(true)}
+                className="text-indigo-600 font-semibold hover:underline cursor-pointer"
+              >
+                + Novo Grupo
+              </button>
+            )}
+          </section>
+        </main>
+      </DragDropContext>
+    </>
 
   );
 }

@@ -1,8 +1,17 @@
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { Bell, Search } from "lucide-react";
+interface HeaderProps {
+  onSearch: (search: string) => void;
+}
 
-export function Header() {
+export function Header({ onSearch }: HeaderProps) {
   const [hasLateTasks, setHasLateTasks] = useState(true);
+  const [search, setSearch] = useState("");
+
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    onSearch(e.target.value);
+  }
 
   return (
     <header className="flex items-center justify-between bg-indigo-600 px-4 py-3 shadow-md">
@@ -12,6 +21,8 @@ export function Header() {
           type="text"
           placeholder="Localizar atividade..."
           className="w-full outline-none text-sm text-gray-700 placeholder-gray-400"
+          value={search}
+          onChange={handleChange}
         />
       </div>
 

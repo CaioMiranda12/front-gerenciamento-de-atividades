@@ -15,7 +15,7 @@ export function Header({ onSearch, lateActivities }: HeaderProps) {
   }
 
   return (
-    <header className="flex items-center justify-between bg-indigo-600 px-4 py-3 shadow-md">
+    <header className="flex items-center justify-between bg-indigo-600 px-4 py-3 shadow-md sticky top-0 z-50">
       <div className="flex items-center gap-2 bg-white rounded-md px-2 py-1 w-72">
         <Search size={18} className="text-gray-500" />
         <input

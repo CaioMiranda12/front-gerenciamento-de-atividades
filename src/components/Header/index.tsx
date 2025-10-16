@@ -35,7 +35,7 @@ export function Header({ onSearch, lateActivities }: HeaderProps) {
         {lateActivities.length > 0 && (
           <div>
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full px-1.5 py-0.5">
-              1
+              {lateActivities.length}
             </span>
 
             <div className="absolute right-0 mt-2 bg-white border border-gray-200 text-xs text-gray-700 rounded-md shadow-lg p-2 w-max">

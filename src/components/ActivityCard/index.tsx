@@ -23,12 +23,16 @@ interface ActivityCardProps {
   index: number;
   onUpdateActivity: (updated: ActivityDTO) => void;
   onDeleteActivity: (activityId: number) => void;
+
+  lateActivities: ActivityDTO[];
 }
 
-export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivity }: ActivityCardProps) {
+export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivity, lateActivities }: ActivityCardProps) {
   const [showModal, setShowModal] = useState(false);
+  const [isLateActivity, setIsLateActivity] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
+
 
   const {
     register,
@@ -50,6 +54,14 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
     }
   }, [showModal]);
 
+  useEffect(() => {
+    if (lateActivities.includes(activity)) {
+      setIsLateActivity(true);
+    } else {
+      setIsLateActivity(false);
+    }
+  }, [activity, lateActivities])
+
   if (!activity) return null;
 
   async function onSubmit(data: ActivityFormData) {
@@ -59,22 +71,10 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
     }
 
     try {
-      // const updated = await updateActivity(localActivity.id, {
-      //   ...localActivity,
-      //   description: data.description,
-      //   dueDate: data.dueDate,
-      //   completed: data.completed ?? false
-      // });
-      // setLocalActivity(updated);
       await onUpdateActivity({ ...activity, ...data });
 
       toast.success("Atividade atualizada com sucesso!");
       setShowModal(false);
-      // reset({
-      //   description: updated.description,
-      //   dueDate: updated.dueDate || "",
-      //   completed: updated.completed ?? false,
-      // });
     } catch (error) {
       console.error(error);
       toast.error("Falha ao atualizar atividade.");
@@ -90,7 +90,6 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
     try {
       await onDeleteActivity(activity.id);
       toast.success("Atividade excluída com sucesso!");
-      // setLocalActivity(null);
       setShowModal(false);
     } catch (error) {
       console.error(error);
@@ -98,9 +97,17 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
     }
   }
 
+  function getBgColor() {
+    if (activity.completed) return 'bg-green-50';
+    return isLateActivity ? 'bg-red-50' : 'bg-gray-50';
+  }
+
   return (
     <div
-      className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:shadow-sm transition flex justify-between items-center cursor-pointer"
+      className={`
+        border border-gray-200 rounded-lg p-3 hover:shadow-sm transition flex justify-between items-center cursor-pointer
+        ${getBgColor()}
+        `}
       onClick={() => setShowModal(true)}
     >
       <Draggable draggableId={String(activity.id)} index={index}>
@@ -149,7 +156,7 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Data de prazo</label>
+                <label className="block text-sm text-gray-600 mb-1">Prazo de entrega</label>
                 <input
                   type="date"
                   {...register("dueDate")}

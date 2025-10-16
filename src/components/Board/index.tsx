@@ -156,6 +156,7 @@ export default function Board() {
               onCreateActivity={handleCreateActivity}
               onUpdateActivity={handleUpdateActivity}
               onDeleteActivity={handleDeleteActivity}
+              lateActivities={lateActivities}
             />
           ))}
 

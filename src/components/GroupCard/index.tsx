@@ -24,9 +24,11 @@ interface GroupCardProps {
   onUpdateActivity: (updated: ActivityDTO) => void;
   onDeleteActivity: (activityId: number) => void;
 
+  lateActivities: ActivityDTO[];
+
 }
 
-export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateActivity, onDeleteActivity }: GroupCardProps) {
+export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateActivity, onDeleteActivity, lateActivities }: GroupCardProps) {
   const [showModal, setShowModal] = useState(false);
 
   const [editingGroup, setEditingGroup] = useState(false);
@@ -200,6 +202,7 @@ export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateAct
                   index={index}
                   onUpdateActivity={onUpdateActivity}
                   onDeleteActivity={onDeleteActivity}
+                  lateActivities={lateActivities}
                 />
               ))
             ) : (
@@ -212,12 +215,15 @@ export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateAct
         )}
 
       </Droppable>
-      <button
-        onClick={() => setShowModal(true)}
-        className="text-indigo-600 font-medium hover:underline transition cursor-pointer"
-      >
-        + Nova Atividade
-      </button>
+
+      <div className="flex items-center justify-center p-3">
+        <button
+          onClick={() => setShowModal(true)}
+          className="text-indigo-600 font-medium hover:underline transition cursor-pointer"
+        >
+          + Nova Atividade
+        </button>
+      </div>
 
     </section>
   );

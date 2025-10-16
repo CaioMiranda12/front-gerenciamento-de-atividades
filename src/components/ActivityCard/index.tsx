@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { updateActivity } from "../../services/activityService";
 import { toast } from "react-toastify";
+import { formatDateToBR } from "../../utils/formatDateToBR";
 
 const activitySchema = z.object({
   description: z
@@ -72,7 +73,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         {localActivity.description && (
           <div className="flex items-center gap-2">
             <Calendar size={12} />
-            <p className="text-sm text-gray-500">{localActivity.dueDate}</p>
+            <p className="text-sm text-gray-500">{localActivity.dueDate && formatDateToBR(localActivity.dueDate)}</p>
           </div>
         )}
       </div>

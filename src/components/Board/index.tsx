@@ -29,8 +29,12 @@ export default function Board() {
 
   return (
     <main className="p-6 flex gap-4 overflow-x-auto">
-      {groups.map((g) => (
-        <GroupCard key={g.id} group={g} />
+      {groups.map((group) => (
+        <GroupCard
+          key={group.id}
+          group={group}
+          onGroupDeleted={(id) => setGroups(groups.filter(group => group.id !== id))}
+        />
       ))}
 
       <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center h-20">

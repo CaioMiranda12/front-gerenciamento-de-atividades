@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
-import { updateGroup } from "../../services/groupService";
+import { deleteGroup, updateGroup } from "../../services/groupService";
 
 const activitySchema = z.object({
   description: z
@@ -18,9 +18,10 @@ const activitySchema = z.object({
 type ActivityFormData = z.infer<typeof activitySchema>;
 interface GroupCardProps {
   group: GroupDTO;
+  onGroupDeleted?: (id: number) => void;
 }
 
-export function GroupCard({ group }: GroupCardProps) {
+export function GroupCard({ group, onGroupDeleted }: GroupCardProps) {
   const [showModal, setShowModal] = useState(false);
   const [activities, setActivities] = useState<ActivityDTO[]>(group.activities);
 
@@ -85,6 +86,21 @@ export function GroupCard({ group }: GroupCardProps) {
     }
   }
 
+  async function handleDeleteGroup() {
+    const confirmed = window.confirm(`Tem certeza que deseja excluir o grupo ${(group.name)}?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteGroup(group.id);
+      toast.success("Grupo excluído com sucesso!");
+      if (onGroupDeleted) onGroupDeleted(group.id);
+    } catch (err) {
+      console.error(err);
+      toast.error("Falha ao excluir grupo.");
+    }
+  }
+
+
   function handleGroupKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
       handleUpdateGroup();
@@ -93,7 +109,7 @@ export function GroupCard({ group }: GroupCardProps) {
 
   return (
     <section className="bg-white rounded-xl shadow-md w-80 h-max flex-shrink-0 border border-gray-200">
-      <header className="p-4 py-2 rounded-t-xl font-semibold text-black">
+      <header className="p-4 py-2 rounded-t-xl font-semibold text-black flex justify-between items-center">
         {editingGroup ? (
           <input
             ref={inputRef}
@@ -111,6 +127,13 @@ export function GroupCard({ group }: GroupCardProps) {
             {groupName}
           </span>
         )}
+
+        <button
+          onClick={handleDeleteGroup}
+          className="text-red-600 hover:underline text-sm ml-2 cursor-pointer"
+        >
+          Excluir
+        </button>
       </header>
 
       {showModal && (

@@ -1,10 +1,10 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Trash2 } from "lucide-react";
 import type { ActivityDTO } from "../../types";
 import { z } from 'zod'
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { updateActivity } from "../../services/activityService";
+import { deleteActivity, updateActivity } from "../../services/activityService";
 import { toast } from "react-toastify";
 import { formatDateToBR } from "../../utils/formatDateToBR";
 
@@ -14,6 +14,7 @@ const activitySchema = z.object({
     .min(1, "A descrição deve ter pelo menos 1 caracteres")
     .max(200, "A descrição é muito longa"),
   dueDate: z.string().optional(),
+  completed: z.boolean().optional(),
 });
 
 type ActivityFormData = z.infer<typeof activitySchema>;
@@ -23,7 +24,7 @@ interface ActivityCardProps {
 
 export function ActivityCard({ activity }: ActivityCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [localActivity, setLocalActivity] = useState<ActivityDTO>(activity);
+  const [localActivity, setLocalActivity] = useState<ActivityDTO | null>(activity);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,8 +36,9 @@ export function ActivityCard({ activity }: ActivityCardProps) {
   } = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-      description: localActivity.description,
-      dueDate: localActivity.dueDate || ""
+      description: localActivity?.description ?? "",
+      dueDate: localActivity?.dueDate ?? "",
+      completed: localActivity?.completed ?? false,
     },
   });
 
@@ -46,20 +48,49 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     }
   }, [showModal]);
 
+  if (!localActivity) return null;
+
   async function onSubmit(data: ActivityFormData) {
+    if (!localActivity?.id) {
+      toast.error("ID da atividade inválido.");
+      return;
+    }
+
     try {
       const updated = await updateActivity(localActivity.id, {
         ...localActivity,
         description: data.description,
         dueDate: data.dueDate,
+        completed: data.completed ?? false
       });
       setLocalActivity(updated);
       toast.success("Atividade atualizada com sucesso!");
       setShowModal(false);
-      reset({ description: updated.description, dueDate: updated.dueDate || "" });
+      reset({
+        description: updated.description,
+        dueDate: updated.dueDate || "",
+        completed: updated.completed ?? false,
+      });
     } catch (error) {
       console.error(error);
       toast.error("Falha ao atualizar atividade.");
+    }
+  }
+
+  async function handleDelete() {
+    if (!localActivity) return;
+
+    const confirmed = window.confirm("Tem certeza que deseja excluir esta atividade?");
+    if (!confirmed) return;
+
+    try {
+      await deleteActivity(localActivity.id);
+      toast.success("Atividade excluída com sucesso!");
+      setLocalActivity(null);
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Falha ao excluir atividade.");
     }
   }
 
@@ -70,6 +101,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     >
       <div className="w-full overflow-hidden">
         <h4 className="font-medium text-gray-800 hover:underline break-words whitespace-pre-wrap">{localActivity.description}</h4>
+
         {localActivity.description && (
           <div className="flex items-center gap-2 mt-1 flex-wrap text-sm text-gray-500">
             <Calendar size={12} />
@@ -112,26 +144,49 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                 />
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="completed"
+                  {...register("completed")}
+                  className="cursor-pointer"
+                />
+                <label htmlFor="completed" className="text-sm text-gray-700">
+                  Concluída
+                </label>
+              </div>
+
+              <div className="flex justify-between items-center pt-3">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    reset({ description: localActivity.description, dueDate: localActivity.dueDate || "" });
-                    setShowModal(false);
-                  }}
-                  className="text-gray-500 hover:underline cursor-pointer"
+                  onClick={handleDelete}
+                  className="flex items-center text-red-600 hover:underline text-sm cursor-pointer"
                 >
-                  Cancelar
+                  <Trash2 size={16} className="mr-1" />
+                  Excluir
                 </button>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer disabled:opacity-50"
-                >
-                  {isSubmitting ? "Salvando..." : "Salvar"}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      reset({ description: localActivity.description, dueDate: localActivity.dueDate || "" });
+                      setShowModal(false);
+                    }}
+                    className="text-gray-500 hover:underline cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? "Salvando..." : "Salvar"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

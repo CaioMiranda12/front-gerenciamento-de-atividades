@@ -1,73 +1,80 @@
-# React + TypeScript + Vite
+# 🗂️ Gerenciador de Atividades - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicação React + TypeScript que consome a API REST do projeto Gerenciador de Atividades (Spring Boot + PostgreSQL).
+Permite organizar grupos e atividades, criar, editar, excluir e mover tarefas entre grupos através de drag and drop.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+# 🚀 Tecnologias Utilizadas
 
-## React Compiler
+### Frontend
+-  **React.js (Vite)**
+-  **TailwindCSS** — para estilização rápida e responsiva
+-  **React Beautiful DnD** — para drag and drop entre grupos
+-  **Lucide Icons** — ícones minimalistas e elegantes
+-  **React Toastify** — feedback visual com toasts
+-  **Zod + React Hook Form** — validação de formulários
+-  **Search & Filter** — busca em tempo real por atividades
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Backend
+-  **Spring Boot (Java 17+)**
+-  **Spring Data JPA**
+-  **PostgreSQL**
+-  **Flyway**
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🧠 Funcionalidades Principais
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 🧩 Grupos de Atividades
+- Cada grupo contém uma lista de atividades.
+- O nome do grupo pode ser **editado em linha**.
+- Grupos podem ser **excluídos** dinamicamente.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### ✅ Atividades
+- Criar, editar e excluir atividades diretamente na interface.
+- Cada atividade contém:
+  - Descrição  
+  - Data de entrega (`dueDate`)
+  - Status de conclusão (`completed`)
+- Descrições longas são automaticamente quebradas em múltiplas linhas.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 🎯 Drag and Drop
+- Arraste e solte atividades entre grupos.
+- O sistema atualiza automaticamente o `groupId` da atividade e sua **posição** dentro do grupo.
+- As mudanças são persistidas no backend.
+
+### 🔍 Busca de Atividades
+- Campo de pesquisa no **Header** para filtrar atividades em todos os grupos.
+- A busca é **reativa** e não diferencia maiúsculas/minúsculas.
+
+### 🔔 Notificações
+- Ícone de sino indica quando existem **atividades atrasadas**.
+- Mostra o número total e uma mensagem contextual.
+
+---
+
+## ⚙️ Como Rodar o Projeto
+
+### 1. Entrar na pasta do frontend
+```bash
+cd frontend
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Instalar dependências
+```bash
+yarn install
 ```
+
+### 3. Rodar o projeto
+```bash
+yarn dev
+```
+
+O frontend estará disponível em:
+👉 http://localhost:5173
+
+> ⚠️ Este projeto utiliza **Yarn** como gerenciador de pacotes.
+> Embora o uso de `npm` seja possível, recomenda-se **manter o Yarn** para garantir compatibilidade com as versões das dependências.
+
+

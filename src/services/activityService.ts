@@ -19,3 +19,7 @@ export async function updateActivity(id: number, data: ActivityDTO): Promise<Act
 export async function deleteActivity(id: number): Promise<void> {
   await api.delete(`/activities/${id}`);
 }
+
+export async function reorderActivities(reordered: { id: number; groupId: number; position: number }[]): Promise<void> {
+  await api.put("/activities/reorder", reordered);
+}

@@ -4,9 +4,9 @@ import { z } from 'zod'
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { deleteActivity, updateActivity } from "../../services/activityService";
 import { toast } from "react-toastify";
 import { formatDateToBR } from "../../utils/formatDateToBR";
+import { Draggable } from "react-beautiful-dnd";
 
 const activitySchema = z.object({
   description: z
@@ -20,11 +20,13 @@ const activitySchema = z.object({
 type ActivityFormData = z.infer<typeof activitySchema>;
 interface ActivityCardProps {
   activity: ActivityDTO;
+  index: number;
+  onUpdateActivity: (updated: ActivityDTO) => void;
+  onDeleteActivity: (activityId: number) => void;
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivity }: ActivityCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [localActivity, setLocalActivity] = useState<ActivityDTO | null>(activity);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -36,9 +38,9 @@ export function ActivityCard({ activity }: ActivityCardProps) {
   } = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
-      description: localActivity?.description ?? "",
-      dueDate: localActivity?.dueDate ?? "",
-      completed: localActivity?.completed ?? false,
+      description: activity?.description ?? "",
+      dueDate: activity?.dueDate ?? "",
+      completed: activity?.completed ?? false,
     },
   });
 
@@ -48,29 +50,31 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     }
   }, [showModal]);
 
-  if (!localActivity) return null;
+  if (!activity) return null;
 
   async function onSubmit(data: ActivityFormData) {
-    if (!localActivity?.id) {
+    if (!activity?.id) {
       toast.error("ID da atividade inválido.");
       return;
     }
 
     try {
-      const updated = await updateActivity(localActivity.id, {
-        ...localActivity,
-        description: data.description,
-        dueDate: data.dueDate,
-        completed: data.completed ?? false
-      });
-      setLocalActivity(updated);
+      // const updated = await updateActivity(localActivity.id, {
+      //   ...localActivity,
+      //   description: data.description,
+      //   dueDate: data.dueDate,
+      //   completed: data.completed ?? false
+      // });
+      // setLocalActivity(updated);
+      await onUpdateActivity({ ...activity, ...data });
+
       toast.success("Atividade atualizada com sucesso!");
       setShowModal(false);
-      reset({
-        description: updated.description,
-        dueDate: updated.dueDate || "",
-        completed: updated.completed ?? false,
-      });
+      // reset({
+      //   description: updated.description,
+      //   dueDate: updated.dueDate || "",
+      //   completed: updated.completed ?? false,
+      // });
     } catch (error) {
       console.error(error);
       toast.error("Falha ao atualizar atividade.");
@@ -78,15 +82,15 @@ export function ActivityCard({ activity }: ActivityCardProps) {
   }
 
   async function handleDelete() {
-    if (!localActivity) return;
+    if (!activity) return;
 
     const confirmed = window.confirm("Tem certeza que deseja excluir esta atividade?");
     if (!confirmed) return;
 
     try {
-      await deleteActivity(localActivity.id);
+      await onDeleteActivity(activity.id);
       toast.success("Atividade excluída com sucesso!");
-      setLocalActivity(null);
+      // setLocalActivity(null);
       setShowModal(false);
     } catch (error) {
       console.error(error);
@@ -99,16 +103,25 @@ export function ActivityCard({ activity }: ActivityCardProps) {
       className="bg-gray-50 border border-gray-200 rounded-lg p-3 hover:shadow-sm transition flex justify-between items-center cursor-pointer"
       onClick={() => setShowModal(true)}
     >
-      <div className="w-full overflow-hidden">
-        <h4 className="font-medium text-gray-800 hover:underline break-words whitespace-pre-wrap">{localActivity.description}</h4>
+      <Draggable draggableId={String(activity.id)} index={index}>
+        {(provided) => (
+          <div
+            className="w-full overflow-hidden"
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+          >
+            <h4 className="font-medium text-gray-800 hover:underline break-words whitespace-pre-wrap">{activity.description}</h4>
 
-        {localActivity.description && (
-          <div className="flex items-center gap-2 mt-1 flex-wrap text-sm text-gray-500">
-            <Calendar size={12} />
-            <p className="text-sm text-gray-500">{localActivity.dueDate && formatDateToBR(localActivity.dueDate)}</p>
+            {activity.description && (
+              <div className="flex items-center gap-2 mt-1 flex-wrap text-sm text-gray-500">
+                <Calendar size={12} />
+                <p className="text-sm text-gray-500">{activity.dueDate && formatDateToBR(activity.dueDate)}</p>
+              </div>
+            )}
           </div>
         )}
-      </div>
+      </Draggable>
 
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-10">
@@ -171,7 +184,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
-                      reset({ description: localActivity.description, dueDate: localActivity.dueDate || "" });
+                      reset({ description: activity.description, dueDate: activity.dueDate || "" });
                       setShowModal(false);
                     }}
                     className="text-gray-500 hover:underline cursor-pointer"

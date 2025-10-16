@@ -3,6 +3,7 @@ export interface ActivityDTO {
   description: string;
   completed: boolean;
   dueDate?: string;
+  groupId: number;
 }
 
 export interface GroupDTO {

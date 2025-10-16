@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { ActivityDTO, GroupDTO } from "../../types";
 import { ActivityCard } from "../ActivityCard";
-import { createActivity } from "../../services/activityService";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { deleteGroup, updateGroup } from "../../services/groupService";
+import { Droppable } from "react-beautiful-dnd";
 
 const activitySchema = z.object({
   description: z
@@ -19,11 +19,15 @@ type ActivityFormData = z.infer<typeof activitySchema>;
 interface GroupCardProps {
   group: GroupDTO;
   onGroupDeleted?: (id: number) => void;
+
+  onCreateActivity: (groupId: number, data: { description: string }) => void;
+  onUpdateActivity: (updated: ActivityDTO) => void;
+  onDeleteActivity: (activityId: number) => void;
+
 }
 
-export function GroupCard({ group, onGroupDeleted }: GroupCardProps) {
+export function GroupCard({ group, onGroupDeleted, onCreateActivity, onUpdateActivity, onDeleteActivity }: GroupCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [activities, setActivities] = useState<ActivityDTO[]>(group.activities);
 
   const [editingGroup, setEditingGroup] = useState(false);
   const [groupName, setGroupName] = useState(group.name);
@@ -39,16 +43,12 @@ export function GroupCard({ group, onGroupDeleted }: GroupCardProps) {
     defaultValues: { description: "" },
   });
 
+  const activities = group.activities;
+
   async function onSubmit(data: ActivityFormData) {
     try {
-      const newActivity = await createActivity({
-        description: data.description,
-        groupId: group.id,
-        dueDate: "",
-        completed: false,
-      });
+      onCreateActivity(group.id, data);
 
-      setActivities((prev) => [...prev, newActivity]);
       toast.success("Atividade criada com sucesso!");
       reset();
       setShowModal(false);
@@ -185,22 +185,40 @@ export function GroupCard({ group, onGroupDeleted }: GroupCardProps) {
         </div>
       )}
 
-      <div className="p-3 flex flex-col gap-3">
-        {activities.length > 0 ? (
-          activities.map((activity) => (
-            <ActivityCard key={activity.id} activity={activity} />
-          ))
-        ) : (
-          <p className="text-sm text-gray-500 italic">Sem atividades</p>
+      <Droppable droppableId={String(group.id)} direction="vertical" isCombineEnabled={false} isDropDisabled={false} ignoreContainerClipping={false}>
+        {(provided) => (
+          <div
+            className="p-3 flex flex-col gap-3"
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+          >
+            {activities.length > 0 ? (
+              activities.map((activity, index) => (
+                <ActivityCard
+                  key={activity.id}
+                  activity={activity}
+                  index={index}
+                  onUpdateActivity={onUpdateActivity}
+                  onDeleteActivity={onDeleteActivity}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 italic">Sem atividades</p>
+            )}
+
+            {provided.placeholder}
+          </div>
+
         )}
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="text-indigo-600 font-medium hover:underline transition cursor-pointer"
-        >
-          + Nova Atividade
-        </button>
-      </div>
+      </Droppable>
+      <button
+        onClick={() => setShowModal(true)}
+        className="text-indigo-600 font-medium hover:underline transition cursor-pointer"
+      >
+        + Nova Atividade
+      </button>
+
     </section>
   );
 }

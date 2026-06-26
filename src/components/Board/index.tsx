@@ -6,14 +6,13 @@ import { createActivity, deleteActivity, reorderActivities, updateActivity } fro
 import { DragDropContext, type DropResult } from "react-beautiful-dnd";
 import { toast } from "react-toastify";
 import { Header } from "../Header";
+import { Plus } from "lucide-react";
 
 export default function Board() {
   const [groups, setGroups] = useState<GroupDTO[]>([]);
   const [newGroupName, setNewGroupName] = useState("");
   const [creating, setCreating] = useState(false);
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [lateActivities, setLateActivities] = useState<ActivityDTO[]>([]);
 
   function handleSearch(search: string) {
@@ -30,25 +29,16 @@ export default function Board() {
   async function handleDragEnd(result: DropResult) {
     const { source, destination } = result;
     if (!destination) return;
-
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) return;
+    if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     const sourceGroupId = Number(source.droppableId);
     const destGroupId = Number(destination.droppableId);
-
     const newGroups = [...groups];
     const sourceGroup = newGroups.find(group => group.id === sourceGroupId)!;
     const destGroup = newGroups.find(group => group.id === destGroupId)!;
-
     const [movedActivity] = sourceGroup.activities.splice(source.index, 1);
     const updatedActivity: ActivityDTO = { ...movedActivity, groupId: destGroup.id };
-
-
     destGroup.activities.splice(destination.index, 0, updatedActivity);
-
     setGroups(newGroups);
 
     try {
@@ -59,17 +49,15 @@ export default function Board() {
           position: index,
         }))
       );
-
       toast.success("Atividade movida com sucesso!");
     } catch (err) {
-      console.error(err)
+      console.error(err);
       toast.error("Falha ao mover atividade");
     }
   }
 
   useEffect(() => {
     const late: ActivityDTO[] = [];
-
     groups.forEach(group => {
       group.activities.forEach(activity => {
         if (activity.dueDate && new Date(activity.dueDate) < new Date() && !activity.completed) {
@@ -77,13 +65,12 @@ export default function Board() {
         }
       });
     });
-
     setLateActivities(late);
   }, [groups]);
 
   useEffect(() => {
     loadGroups();
-  }, [])
+  }, []);
 
   async function loadGroups() {
     const data = await getAllGroups();
@@ -93,10 +80,9 @@ export default function Board() {
   async function handleCreateGroup(e: React.FormEvent) {
     e.preventDefault();
     if (!newGroupName.trim()) return;
-
     const created = await createGroup({ name: newGroupName });
     setGroups([...groups, created]);
-    toast.success('Grupo criado com sucesso!')
+    toast.success("Grupo criado com sucesso!");
     setNewGroupName("");
     setCreating(false);
   }
@@ -108,7 +94,6 @@ export default function Board() {
       dueDate: "",
       completed: false,
     });
-
     setGroups(groups =>
       groups.map(group =>
         group.id === groupId
@@ -120,7 +105,6 @@ export default function Board() {
 
   async function handleUpdateActivity(updated: ActivityDTO) {
     const saved = await updateActivity(updated.id, updated);
-
     setGroups(groups =>
       groups.map(group => ({
         ...group,
@@ -133,7 +117,6 @@ export default function Board() {
 
   async function handleDeleteActivity(activityId: number) {
     await deleteActivity(activityId);
-
     setGroups(groups =>
       groups.map(group => ({
         ...group,
@@ -147,13 +130,12 @@ export default function Board() {
       <Header onSearch={handleSearch} lateActivities={lateActivities} />
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <main className="p-6 flex gap-4 overflow-x-auto">
+        <main className="p-6 flex gap-4 overflow-x-auto min-h-[calc(100vh-56px)] items-start">
           {groups.map((group) => (
             <GroupCard
               key={group.id}
               group={{ ...group, activities: getFilteredActivities(group) }}
               onGroupDeleted={(id) => setGroups(groups.filter(group => group.id !== id))}
-
               onCreateActivity={handleCreateActivity}
               onUpdateActivity={handleUpdateActivity}
               onDeleteActivity={handleDeleteActivity}
@@ -161,30 +143,50 @@ export default function Board() {
             />
           ))}
 
-          <section className="min-w-80 bg-gray-100 rounded-xl p-4 flex items-center justify-center h-20">
+          <section className="min-w-72 flex-shrink-0">
             {creating ? (
-              <form onSubmit={handleCreateGroup}>
+              <form
+                onSubmit={handleCreateGroup}
+                className="bg-white border border-[var(--color-border)] rounded-[var(--radius-lg)] p-3 shadow-[var(--shadow-sm)]"
+              >
                 <input
-                  className="border border-gray-400 rounded p-2"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-sm)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   placeholder="Nome do grupo..."
                   autoFocus
-                  onBlur={() => setCreating(false)}
+                  onBlur={() => {
+                    if (!newGroupName.trim()) setCreating(false);
+                  }}
                 />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-[var(--color-primary)] text-white text-sm font-medium rounded-[var(--radius-sm)] py-1.5 hover:bg-[var(--color-primary-hover)] transition-colors cursor-pointer"
+                  >
+                    Criar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCreating(false)}
+                    className="flex-1 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
+                  >
+                    Cancelar
+                  </button>
+                </div>
               </form>
             ) : (
               <button
                 onClick={() => setCreating(true)}
-                className="text-indigo-600 font-semibold hover:underline cursor-pointer"
+                className="w-full flex items-center gap-2 text-sm text-[var(--color-text-secondary)] bg-white/60 hover:bg-white border border-dashed border-[var(--color-border)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] rounded-[var(--radius-lg)] px-4 py-3 transition-all cursor-pointer"
               >
-                + Novo Grupo
+                <Plus size={15} />
+                Novo grupo
               </button>
             )}
           </section>
         </main>
       </DragDropContext>
     </>
-
   );
 }

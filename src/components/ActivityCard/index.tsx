@@ -1,6 +1,6 @@
-import { Calendar, Trash2 } from "lucide-react";
+import { Calendar, Trash2, CheckCircle2 } from "lucide-react";
 import type { ActivityDTO } from "../../types";
-import { z } from 'zod'
+import { z } from 'zod';
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,37 +9,27 @@ import { formatDateToBR } from "../../utils/formatDateToBR";
 import { Draggable } from "react-beautiful-dnd";
 
 const activitySchema = z.object({
-  description: z
-    .string()
-    .min(1, "A descrição deve ter pelo menos 1 caracteres")
-    .max(200, "A descrição é muito longa"),
+  description: z.string().min(1, "Mínimo de 1 caractere").max(200, "Descrição muito longa"),
   dueDate: z.string().optional(),
   completed: z.boolean().optional(),
 });
 
 type ActivityFormData = z.infer<typeof activitySchema>;
+
 interface ActivityCardProps {
   activity: ActivityDTO;
   index: number;
   onUpdateActivity: (updated: ActivityDTO) => void;
   onDeleteActivity: (activityId: number) => void;
-
   lateActivities: ActivityDTO[];
 }
 
 export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivity, lateActivities }: ActivityCardProps) {
   const [showModal, setShowModal] = useState(false);
-  const [isLateActivity, setIsLateActivity] = useState(false);
-
+  const [isLate, setIsLate] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<ActivityFormData>({
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<ActivityFormData>({
     resolver: zodResolver(activitySchema),
     defaultValues: {
       description: activity?.description ?? "",
@@ -49,81 +39,79 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
   });
 
   useEffect(() => {
-    if (showModal && inputRef.current) {
-      inputRef.current.focus();
-    }
+    if (showModal && inputRef.current) inputRef.current.focus();
   }, [showModal]);
 
   useEffect(() => {
-    if (lateActivities.includes(activity)) {
-      setIsLateActivity(true);
-    } else {
-      setIsLateActivity(false);
-    }
-  }, [activity, lateActivities])
+    setIsLate(lateActivities.includes(activity));
+  }, [activity, lateActivities]);
 
   if (!activity) return null;
 
   async function onSubmit(data: ActivityFormData) {
-    if (!activity?.id) {
-      toast.error("ID da atividade inválido.");
-      return;
-    }
-
+    if (!activity?.id) { toast.error("ID inválido."); return; }
     try {
       await onUpdateActivity({ ...activity, ...data });
-
-      toast.success("Atividade atualizada com sucesso!");
+      toast.success("Atividade atualizada!");
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      toast.error("Falha ao atualizar atividade.");
+      toast.error("Falha ao atualizar.");
     }
   }
 
   async function handleDelete() {
     if (!activity) return;
-
-    const confirmed = window.confirm("Tem certeza que deseja excluir esta atividade?");
+    const confirmed = window.confirm("Excluir esta atividade?");
     if (!confirmed) return;
-
     try {
       await onDeleteActivity(activity.id);
-      toast.success("Atividade excluída com sucesso!");
+      toast.success("Atividade excluída!");
       setShowModal(false);
     } catch (error) {
       console.error(error);
-      toast.error("Falha ao excluir atividade.");
+      toast.error("Falha ao excluir.");
     }
   }
 
-  function getBgColor() {
-    if (activity.completed) return 'bg-green-50';
-    return isLateActivity ? 'bg-red-50' : 'bg-gray-50';
+  function getCardStyle() {
+    if (activity.completed) return "bg-[var(--color-success-light)] border-[var(--color-success)]/30";
+    if (isLate) return "bg-[var(--color-danger-light)] border-[var(--color-danger)]/30";
+    return "bg-white border-[var(--color-border)]";
   }
 
   return (
-    <div
-      className={`
-        border border-gray-200 rounded-lg p-3 hover:shadow-sm transition flex justify-between items-center cursor-pointer
-        ${getBgColor()}
-        `}
-      onClick={() => setShowModal(true)}
-    >
+    <>
       <Draggable draggableId={String(activity.id)} index={index}>
-        {(provided) => (
+        {(provided, snapshot) => (
           <div
-            className="w-full overflow-hidden"
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => setShowModal(true)}
+            className={`
+              border rounded-[var(--radius-md)] p-3 cursor-pointer transition-shadow
+              ${getCardStyle()}
+              ${snapshot.isDragging ? "shadow-[var(--shadow-md)] rotate-1" : "hover:shadow-[var(--shadow-sm)]"}
+            `}
           >
-            <h4 className="font-medium text-gray-800 hover:underline break-words whitespace-pre-wrap">{activity.description}</h4>
+            <div className="flex items-start gap-2">
+              {activity.completed && (
+                <CheckCircle2 size={14} className="text-[var(--color-success)] mt-0.5 shrink-0" />
+              )}
+              <p className={`text-sm break-words whitespace-pre-wrap leading-snug flex-1
+                ${activity.completed ? "line-through text-[var(--color-text-muted)]" : "text-[var(--color-text-primary)]"}
+              `}>
+                {activity.description}
+              </p>
+            </div>
 
-            {activity.description && (
-              <div className="flex items-center gap-2 mt-1 flex-wrap text-sm text-gray-500">
-                <Calendar size={12} />
-                <p className="text-sm text-gray-500">{activity.dueDate && formatDateToBR(activity.dueDate)}</p>
+            {activity.dueDate && (
+              <div className={`flex items-center gap-1.5 mt-2 text-xs
+                ${isLate && !activity.completed ? "text-[var(--color-danger)]" : "text-[var(--color-text-muted)]"}
+              `}>
+                <Calendar size={11} />
+                <span>{formatDateToBR(activity.dueDate)}</span>
               </div>
             )}
           </div>
@@ -131,12 +119,15 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
       </Draggable>
 
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-10">
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black/40 z-50"
+          onClick={() => setShowModal(false)}
+        >
           <div
-            className="bg-white p-4 rounded-lg shadow-lg w-80"
+            className="bg-white rounded-[var(--radius-lg)] shadow-[var(--shadow-md)] w-96 p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-semibold mb-3">Editar atividade</h3>
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-4">Editar atividade</h3>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
               <div>
@@ -146,21 +137,26 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
                     register("description").ref(element);
                     inputRef.current = element;
                   }}
-                  className={`border p-2 w-full rounded ${errors.description ? "border-red-500" : "border-gray-300"
+                  className={`w-full border rounded-[var(--radius-sm)] px-3 py-2 text-sm outline-none transition-colors
+                    ${errors.description
+                      ? "border-[var(--color-danger)]"
+                      : "border-[var(--color-border)] focus:border-[var(--color-primary)]"
                     }`}
                   placeholder="Descrição da atividade"
                 />
                 {errors.description && (
-                  <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
+                  <p className="text-[var(--color-danger)] text-xs mt-1">{errors.description.message}</p>
                 )}
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 mb-1">Prazo de entrega</label>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                  Prazo de entrega
+                </label>
                 <input
                   type="date"
                   {...register("dueDate")}
-                  className="border p-2 w-full rounded border-gray-300"
+                  className="w-full border border-[var(--color-border)] rounded-[var(--radius-sm)] px-3 py-2 text-sm outline-none focus:border-[var(--color-primary)] transition-colors"
                 />
               </div>
 
@@ -169,20 +165,20 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
                   type="checkbox"
                   id="completed"
                   {...register("completed")}
-                  className="cursor-pointer"
+                  className="cursor-pointer accent-[var(--color-primary)] w-4 h-4"
                 />
-                <label htmlFor="completed" className="text-sm text-gray-700">
-                  Concluída
+                <label htmlFor="completed" className="text-sm text-[var(--color-text-secondary)] cursor-pointer">
+                  Marcar como concluída
                 </label>
               </div>
 
-              <div className="flex justify-between items-center pt-3">
+              <div className="flex justify-between items-center pt-2 border-t border-[var(--color-border)] mt-4">
                 <button
                   type="button"
                   onClick={handleDelete}
-                  className="flex items-center text-red-600 hover:underline text-sm cursor-pointer"
+                  className="flex items-center gap-1.5 text-sm text-[var(--color-danger)] hover:text-[var(--color-danger)]/80 transition-colors cursor-pointer"
                 >
-                  <Trash2 size={16} className="mr-1" />
+                  <Trash2 size={14} />
                   Excluir
                 </button>
 
@@ -190,19 +186,18 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation()
+                      e.stopPropagation();
                       reset({ description: activity.description, dueDate: activity.dueDate || "" });
                       setShowModal(false);
                     }}
-                    className="text-gray-500 hover:underline cursor-pointer"
+                    className="px-4 py-2 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors cursor-pointer"
                   >
                     Cancelar
                   </button>
-
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 cursor-pointer disabled:opacity-50"
+                    className="px-4 py-2 bg-[var(--color-primary)] text-white text-sm font-medium rounded-[var(--radius-sm)] hover:bg-[var(--color-primary-hover)] transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {isSubmitting ? "Salvando..." : "Salvar"}
                   </button>
@@ -212,7 +207,6 @@ export function ActivityCard({ activity, index, onUpdateActivity, onDeleteActivi
           </div>
         </div>
       )}
-
-    </div>
+    </>
   );
 }
